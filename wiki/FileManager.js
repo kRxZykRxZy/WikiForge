@@ -1,25 +1,38 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
-const ejs = require('ejs');
 
-const response = await axios.get(JSON_COMING_SOON);
-const data = await response.json();
+let data = [];
+
+(async () => {
+  try {
+    const response = await axios.get('JSON_COMING_SOON');
+    data = response.data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+})();
 
 router.get('/wiki/:WikiName', (req, res) => {
   const name = req.params.WikiName;
-  if(data.includes(name)) {
-    const data = JSON.parse(data);
-    const content = data[data.indexOf(name) + 1];
-    const author = data[data.indexOf(name) + 2];
-    const editHistory = data[data.indexOf(name) + 3];
-    const editAuthor = data[data.indexOf(name) + 4];
-    const editDate = data[data.indexOf(name) + 5];
+
+  if (data.includes(name)) {
+    const index = data.indexOf(name);
+    const content = data[index + 1];
+    const author = data[index + 2];
+    const editHistory = data[index + 3];
+    const editAuthor = data[index + 4];
+    const editDate = data[index + 5];
+
     let edit = '';
-    const index = 1
-    editHistory.forEach => {
-      const edit += `${editAuthor[index]} Edited This Page On ${editDate[index]}` 
-      const index += 1
-      }
-    } 
+    for (let i = 0; i < editHistory.length; i++) {
+      edit += `${editAuthor[i]} edited this page on ${editDate[i]}\n`;
+    }
+
+    res.send({ name, content, author, edit });
+  } else {
+    res.status(404).send('Wiki page not found.');
+  }
 });
+
+module.exports = router;
