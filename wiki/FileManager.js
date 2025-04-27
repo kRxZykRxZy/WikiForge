@@ -22,3 +22,4 @@ router.get('/wiki/:WikiName', (req, res) => {
       const index += 1
       }
     } 
+});
