@@ -1,19 +1,23 @@
 const express = require('express');
 const router = express.Router();
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+const ejs = require('ejs');
 
 let data = [];
 
+// Fetch wiki data at startup
 (async () => {
   try {
-    const response = await axios.get('JSON_COMING_SOON');
+    const response = await axios.get('JSON_COMING_SOON'); // replace this later
     data = response.data;
   } catch (error) {
     console.error('Error fetching data:', error);
   }
 })();
 
-router.get('/wiki/:WikiName', (req, res) => {
+router.get('/wiki/:WikiName', async (req, res) => {
   const name = req.params.WikiName;
 
   if (data.includes(name)) {
@@ -24,12 +28,27 @@ router.get('/wiki/:WikiName', (req, res) => {
     const editAuthor = data[index + 4];
     const editDate = data[index + 5];
 
-    let edit = '';
+    // Build edit history
+    let edits = [];
     for (let i = 0; i < editHistory.length; i++) {
-      edit += `${editAuthor[i]} edited this page on ${editDate[i]}\n`;
+      edits.push({
+        author: editAuthor[i],
+        date: editDate[i],
+        description: editHistory[i]
+      });
     }
 
-    res.send({ name, content, author, edit });
+    // Read the wiki.ejs file manually
+    const templatePath = path.join(__dirname, 'public', 'wiki.ejs');
+    try {
+      const template = fs.readFileSync(templatePath, 'utf-8');
+      const html = ejs.render(template, { name, content, author, edits });
+      res.send(html);
+    } catch (err) {
+      console.error('Error reading template:', err);
+      res.status(500).send('Template error.');
+    }
+
   } else {
     res.status(404).send('Wiki page not found.');
   }
